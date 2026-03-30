@@ -1,3 +1,15 @@
 spring:
   application:
     name: geolocalizacao
+
+app:
+  mqtt:
+    host: tcp://localhost:1883
+    client-id: spring-mqtt-client-${random.uuid}
+    inboundTopic: robots/telemetry
+    outboundTopic: robots/commands
+
+#logging:
+#  level:
+#    org.springframework.integration.mqtt: DEBUG
+#    org.eclipse.paho.client.mqttv3: DEBUG
