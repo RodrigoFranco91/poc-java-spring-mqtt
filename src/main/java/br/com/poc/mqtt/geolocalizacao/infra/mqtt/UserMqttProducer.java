@@ -4,9 +4,8 @@ import br.com.poc.mqtt.geolocalizacao.application.rest.dto.User;
 import br.com.poc.mqtt.geolocalizacao.infra.mqtt.config.MqttBrokerProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.integration.mqtt.support.MqttHeaders;
-import org.springframework.integration.support.MessageBuilder;
-import org.springframework.messaging.MessageChannel;
+import org.eclipse.paho.client.mqttv3.IMqttClient;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -15,31 +14,19 @@ import tools.jackson.databind.json.JsonMapper;
 @Component
 public class UserMqttProducer {
 
-    private final MessageChannel mqttProducerChannel;
-    private final MqttBrokerProperties mqttBrokerProperties;
+    private final IMqttClient mqttClient;
     private final JsonMapper jsonMapper;
+    private final MqttBrokerProperties mqttBrokerProperties;
 
-    public void sendMessage(User user) {
+    public void sendMessage(User user) throws Exception {
         log.info("Sending message: {}", user);
 
         String payload = jsonMapper.writeValueAsString(user);
+        String topic = mqttBrokerProperties.getProducerTopic() + "/" + user.getNome();
 
-        //POSTAGEM EM TÓPICO FIXO DEFINO EM MqttBrokerConfig
-//        boolean send = mqttProducerChannel.send(
-//                MessageBuilder.withPayload(payload).build()
-//        );
+        MqttMessage message = new MqttMessage(payload.getBytes());
+        message.setQos(0);
 
-
-        //DEIXANDO NOME DO TOPICO DINAMICO
-        boolean send = mqttProducerChannel.send(
-                MessageBuilder.withPayload(payload)
-                        .setHeader(MqttHeaders.TOPIC, mqttBrokerProperties.getProducerTopic() + "/" + user.getNome())
-                        .build()
-        );
-
-
-        if (!send) {
-            log.error("Failed to send message {}", user);
-        }
+        mqttClient.publish(topic, message);
     }
 }
